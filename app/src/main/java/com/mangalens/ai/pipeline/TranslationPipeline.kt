@@ -168,7 +168,7 @@ class TranslationPipeline(
         val pending = current.indices.filter { current[it].translated == null }
         if (pending.isNotEmpty()) {
             setStatus("Translating ${pending.size} bubble(s)…")
-            val chunk = when (s.quality) { 0 -> 5; 1 -> 10; else -> 16 }
+            val chunk = when (s.quality) { 0 -> 8; 1 -> 16; else -> 30 }
             coroutineScope {
                 pending.chunked(chunk).map { idxs ->
                     async {

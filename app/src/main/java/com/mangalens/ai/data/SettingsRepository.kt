@@ -56,7 +56,7 @@ class SettingsRepository(private val ctx: Context) {
             autoTranslate = prefs.getBoolean("autoTranslate", d.autoTranslate),
             quality = prefs.getInt("quality", d.quality),
             speed = prefs.getInt("speed", d.speed),
-            overlayOpacity = prefs.getFloat("opacity", d.overlayOpacity),
+            overlayOpacity = prefs.getFloat("opacity2", d.overlayOpacity),
             fontScale = prefs.getFloat("fontScale", d.fontScale),
             bgAuto = prefs.getBoolean("bgAuto", d.bgAuto),
             bgColor = prefs.getInt("bgColor", d.bgColor),
@@ -75,7 +75,7 @@ class SettingsRepository(private val ctx: Context) {
         prefs.edit()
             .putString("targetLang", s.targetLang).putString("sourceLang", s.sourceLang)
             .putBoolean("autoTranslate", s.autoTranslate).putInt("quality", s.quality).putInt("speed", s.speed)
-            .putFloat("opacity", s.overlayOpacity).putFloat("fontScale", s.fontScale)
+            .putFloat("opacity2", s.overlayOpacity).putFloat("fontScale", s.fontScale)
             .putBoolean("bgAuto", s.bgAuto).putInt("bgColor", s.bgColor).putBoolean("showSfx", s.showSfx)
             .putBoolean("battery", s.batterySaver).putBoolean("cloud", s.cloudEnabled)
             .putString("provider", s.provider.name).putString("oaBase", s.openAiBaseUrl)

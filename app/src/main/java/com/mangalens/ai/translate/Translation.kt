@@ -71,6 +71,8 @@ Rules:
 - Items with sfx=true are sound effects: give a short natural $t equivalent (onomatopoeia), no explanation.
 - Keep each translation short enough to fit a speech bubble. Preserve ellipses and emphasis. Use $t punctuation.
 - The "lang" field is only a hint and may be wrong. Items are in reading order; "previous" is the preceding dialogue for context.
+- The text comes from OCR: it may contain recognition errors, missing or broken characters, or a bubble split into several items. Infer the intended meaning from context and the surrounding dialogue instead of translating errors literally.
+- Write clear, natural, easy Arabic the way people actually speak in a comic (simple Modern Standard Arabic with a conversational feel); match each speaker's tone (angry, shy, sarcastic, formal).
 - Never add notes, romanization or commentary.
 Output ONLY compact JSON: {"t":["..."],"g":{"OriginalName":"Translated"}} where "t" has exactly one string per input item, same order."""
     }

@@ -23,7 +23,7 @@ data class AppSettings(
     val autoTranslate: Boolean = true,
     val quality: Int = 1,            // 0 fast, 1 balanced, 2 best
     val speed: Int = 1,              // 0 fast, 1 balanced, 2 relaxed
-    val overlayOpacity: Float = 0.96f,
+    val overlayOpacity: Float = 1f,
     val fontScale: Float = 1f,
     val bgAuto: Boolean = true,
     val bgColor: Int = 0xFFFFFFFF.toInt(),

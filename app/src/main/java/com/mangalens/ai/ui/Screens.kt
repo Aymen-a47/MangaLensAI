@@ -202,7 +202,7 @@ fun SettingsScreen(repo: SettingsRepository, s: AppSettings) {
             }
         }
         Card2("OVERLAY") {
-            SliderRow("Overlay opacity", s.overlayOpacity, 0.5f..1f, "${(s.overlayOpacity * 100).toInt()}%") { v -> repo.update { it.copy(overlayOpacity = v) } }
+            SliderRow("Overlay opacity", s.overlayOpacity, 0.8f..1f, "${(s.overlayOpacity * 100).toInt()}%") { v -> repo.update { it.copy(overlayOpacity = v) } }
             SliderRow("Arabic font size", s.fontScale, 0.6f..1.6f, "x${"%.1f".format(s.fontScale)}") { v -> repo.update { it.copy(fontScale = v) } }
             SwitchRow("Match bubble color", "Sample the bubble background automatically", s.bgAuto) { v -> repo.update { it.copy(bgAuto = v) } }
             if (!s.bgAuto) {

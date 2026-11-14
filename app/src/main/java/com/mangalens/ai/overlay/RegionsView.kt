@@ -18,9 +18,13 @@ import com.mangalens.ai.util.luminance
 import kotlin.math.max
 import kotlin.math.min
 
-/** Draws opaque patches + auto-fitted RTL text exactly over the original bubbles. Outside patches it is fully transparent. */
+/**
+ * Hides the original text completely (opaque patch that always covers the whole original box + margin)
+ * and draws the translation centred inside it. Patches are drawn first, texts second, so a neighbouring
+ * patch can never cover someone else's translation.
+ */
 class RegionsView(ctx: Context) : View(ctx) {
-    private class Item(val box: RectF, val bg: Int, val layout: StaticLayout, val x: Float, val y: Float)
+    private class Item(val patch: RectF, val bg: Int, val layout: StaticLayout, val x: Float, val y: Float)
 
     private var items: List<Item> = emptyList()
     private var opacity = 1f
@@ -36,14 +40,23 @@ class RegionsView(ctx: Context) : View(ctx) {
         val sw = resources.displayMetrics.widthPixels.toFloat()
         val sh = resources.displayMetrics.heightPixels.toFloat()
         val rtl = Langs.isRtl(s.targetLang)
+
+        // 1) cover rect: ALWAYS bigger than the OCR box, because OCR boxes are tight and miss glyph edges
+        val covers = regions.map { r ->
+            val o = RectF(r.rect)
+            val pad = max(6f * d, 0.12f * min(o.width(), o.height()))
+            RectF(o.left - pad, o.top - pad, o.right + pad, o.bottom + pad)
+        }
+
         val out = ArrayList<Item>()
         regions.forEachIndexed { idx, r ->
             val text = r.translated ?: return@forEachIndexed
-            val orig = RectF(r.rect)
-            val grown = grow(orig, sw, sh)
-            val others = regions.filterIndexed { i, _ -> i != idx }.map { RectF(it.rect) }
-            val box = if (others.none { RectF.intersects(it, grown) }) grown
-            else RectF(orig).also { it.inset(-orig.width() * 0.04f, -orig.height() * 0.04f) }
+            val cover = covers[idx]
+            val others = covers.filterIndexed { i, _ -> i != idx }
+
+            // 2) text box: try a roomier box for long Arabic, but never into a neighbour
+            val grown = grow(cover, sw, sh)
+            val box = if (others.none { RectF.intersects(it, grown) }) grown else RectF(cover)
 
             val bg = if (s.bgAuto) r.bg else s.bgColor
             val fg = if (luminance(bg) > 0.5f) Color.rgb(17, 17, 17) else Color.WHITE
@@ -51,9 +64,9 @@ class RegionsView(ctx: Context) : View(ctx) {
             val padY = box.height() * 0.06f
             val availW = (box.width() - 2 * padX).toInt().coerceAtLeast(20)
             val availH = box.height() - 2 * padY
-            val minPx = 8f * d
+            val minPx = 9f * d
             var lo = minPx
-            var hi = max(minPx, min(box.height() * 0.45f, 26f * d) * s.fontScale)
+            var hi = max(minPx, min(box.height() * 0.42f, 22f * d) * s.fontScale)
             var best: StaticLayout? = null
             repeat(9) {
                 val mid = (lo + hi) / 2f
@@ -68,18 +81,19 @@ class RegionsView(ctx: Context) : View(ctx) {
                 if (box.top < 0) box.offset(0f, -box.top)
                 if (box.bottom > sh) box.offset(0f, sh - box.bottom)
             }
+            val patch = RectF(box).also { it.union(cover) }     // never smaller than the original text area
             val tx = box.left + (box.width() - layout.width) / 2f
             val ty = box.top + (box.height() - layout.height) / 2f
-            out += Item(box, bg, layout, tx, ty)
+            out += Item(patch, bg, layout, tx, ty)
         }
         items = out
         invalidate()
     }
 
     private fun grow(o: RectF, sw: Float, sh: Float): RectF {
-        var w = o.width() * 1.14f
-        val h = o.height() * 1.10f
-        val minW = min(o.height() * 0.8f, sw * 0.5f)   // tall, narrow vertical bubbles need room for horizontal Arabic
+        var w = o.width() * 1.08f
+        val h = o.height() * 1.06f
+        val minW = min(o.height() * 0.8f, sw * 0.5f)   // tall narrow vertical bubbles need room for horizontal Arabic
         if (w < minW) w = minW
         w = min(w, sw * 0.96f)
         val r = RectF(o.centerX() - w / 2, o.centerY() - h / 2, o.centerX() + w / 2, o.centerY() + h / 2)
@@ -103,8 +117,10 @@ class RegionsView(ctx: Context) : View(ctx) {
         for (it in items) {
             bgPaint.color = it.bg
             bgPaint.alpha = (opacity * 255).toInt().coerceIn(0, 255)
-            val rad = min(it.box.width(), it.box.height()) * 0.22f
-            c.drawRoundRect(it.box, rad, rad, bgPaint)
+            val rad = min(it.patch.width(), it.patch.height()) * 0.12f
+            c.drawRoundRect(it.patch, rad, rad, bgPaint)
+        }
+        for (it in items) {
             c.save()
             c.translate(it.x, it.y)
             it.layout.draw(c)

@@ -20,13 +20,13 @@ object Bubbles {
 
     fun group(blocks: List<OcrEngine.Block>, screenW: Int): List<Bubble> {
         if (blocks.isEmpty()) return emptyList()
-        val base = max(8, (screenW * 0.012f).toInt())
+        val base = max(10, (screenW * 0.016f).toInt())
         val parent = IntArray(blocks.size) { it }
         fun find(x: Int): Int { var a = x; while (parent[a] != a) { parent[a] = parent[parent[a]]; a = parent[a] }; return a }
         for (i in blocks.indices) for (j in i + 1 until blocks.size) {
             val a = blocks[i]; val b = blocks[j]
             if (family(a.script) != family(b.script)) continue
-            val m = max(base.toFloat(), 0.6f * min(a.charSize, b.charSize)).toInt()
+            val m = max(base.toFloat(), 0.8f * min(a.charSize, b.charSize)).toInt()
             val ra = Rect(a.rect).apply { inset(-m, -m) }
             if (Rect.intersects(ra, b.rect)) parent[find(i)] = find(j)
         }
@@ -71,10 +71,14 @@ object Sampler {
         val rs = ArrayList<Int>(); val gs = ArrayList<Int>(); val bs = ArrayList<Int>()
         fun add(x: Int, y: Int) { val p = bmp.getPixel(x, y); rs += Color.red(p); gs += Color.green(p); bs += Color.blue(p) }
         val n = 14
-        for (i in 0..n) { val x = l + (rr - l) * i / n; add(x, t); add(x, b) }
-        for (i in 0..n) { val y = t + (b - t) * i / n; add(l, y); add(rr, y) }
+        for (off in intArrayOf(0, 5)) {   // two rings: just outside the text, and a bit further out
+            val l2 = (l - off).coerceIn(0, bmp.width - 1); val t2 = (t - off).coerceIn(0, bmp.height - 1)
+            val r2 = (rr + off).coerceIn(0, bmp.width - 1); val b2 = (b + off).coerceIn(0, bmp.height - 1)
+            for (i in 0..n) { val x = l2 + (r2 - l2) * i / n; add(x, t2); add(x, b2) }
+            for (i in 0..n) { val y = t2 + (b2 - t2) * i / n; add(l2, y); add(r2, y) }
+        }
         val cr = rs.sorted()[rs.size / 2]; val cg = gs.sorted()[gs.size / 2]; val cb = bs.sorted()[bs.size / 2]
-        if (cr > 235 && cg > 235 && cb > 235) return Color.WHITE
+        if (cr > 215 && cg > 215 && cb > 215) return Color.WHITE   // manga bubbles: clean white
         if (cr < 25 && cg < 25 && cb < 25) return Color.rgb(15, 15, 15)
         return Color.rgb(cr, cg, cb)
     }
